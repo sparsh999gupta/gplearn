@@ -260,6 +260,7 @@ class _Program(object):
                     output += ', '
         return output
 
+
     def export_graphviz(self, fade_nodes=None):
         """Returns a string, Graphviz script for visualizing the program.
 
@@ -273,12 +274,15 @@ class _Program(object):
         -------
         output : string
             The Graphviz script to plot the tree representation of the program.
-
         """
+
         terminals = []
+        count_terminals = 0
+        count_primitive = 0
         if fade_nodes is None:
             fade_nodes = []
         output = 'digraph program {\nnode [style=filled]\n'
+
         for i, node in enumerate(self.program):
             fill = '#cecece'
             if isinstance(node, _Function):
@@ -287,6 +291,8 @@ class _Program(object):
                 terminals.append([node.arity, i])
                 output += ('%d [label="%s", fillcolor="%s"] ;\n'
                            % (i, node.name, fill))
+                count_primitive+=1
+                # print("[Early One] Printing node at %s :", node.name)
             else:
                 if i not in fade_nodes:
                     fill = '#60a6f6'
@@ -297,14 +303,19 @@ class _Program(object):
                         feature_name = self.feature_names[node]
                     output += ('%d [label="%s", fillcolor="%s"] ;\n'
                                % (i, feature_name, fill))
+                    # print("Printing node at %s :", feature_name)
+                    count_terminals+=1
                 else:
                     output += ('%d [label="%.3f", fillcolor="%s"] ;\n'
                                % (i, node, fill))
+                    # print('Printing node at "%.3f" :',node)
+
                 if i == 0:
                     # A degenerative program of only one node
-                    return output + '}'
+                    return count_terminals,count_primitive,output + '}'
                 terminals[-1][0] -= 1
                 terminals[-1].append(i)
+                # print("Printing the terminal:",terminals,"!!")
                 while terminals[-1][0] == 0:
                     output += '%d -> %d ;\n' % (terminals[-1][1],
                                                 terminals[-1][-1])
@@ -313,7 +324,7 @@ class _Program(object):
                         parent = terminals[-1][-1]
                         terminals.pop()
                         if not terminals:
-                            return output + '}'
+                            return count_terminals,count_primitive,output + '}'
                         terminals[-1].append(parent)
                         terminals[-1][0] -= 1
 
